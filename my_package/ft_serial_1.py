@@ -5,7 +5,7 @@ import time
 # import serial
 from serial import win32
 from serial import SerialException
-from .code_Hemming import *
+from .code_Cyclic import *
 
 from .ft_serial import SerialBase, to_bytes
 # import .ft_serial
@@ -235,7 +235,7 @@ class Serial(SerialBase):
 		if not self.is_open:
 			print("Port is not opened")
 			exit(1)
-		data_encode = encode(data)
+		data_encode = encode_loop(data)
 		data_encode_with_errors = set_errors(data_encode)
 		data_encode_with_errors = data_encode_with_errors.encode('utf-8')
 		n = win32.DWORD()
@@ -309,7 +309,7 @@ class Serial(SerialBase):
 				                         ctypes.byref(rc),
 				                         ctypes.byref(self._overlapped_read))
 				buffer = buf.raw.decode('utf-8')
-				buffer = decode(buffer)
+				buffer = decode_loop(buffer)
 				return buffer
 		else:
 			return []
