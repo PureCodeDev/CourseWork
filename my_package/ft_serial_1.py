@@ -309,7 +309,7 @@ class Serial(SerialBase):
 				                         ctypes.byref(rc),
 				                         ctypes.byref(self._overlapped_read))
 				buffer = buf.raw.decode('utf-8')
-				buffer = decode_loop(buffer)
+				buffer, a, b = decode_loop(buffer)
 				return buffer
 		else:
 			return []

@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 import tkinter as tk
 
-from scipy import rand
+
 import random
 
 def chat(ser):
@@ -34,7 +34,7 @@ def chat(ser):
         time.sleep(10)
         while True:
             if ser.is_open:
-                listbox.insert(tk.tk.END, "[" + datetime.strftime(datetime.now(), "%H:%M:%S") + "] " + "ACK_LINKACTIVE")
+                listbox.insert(tk.END, "[" + datetime.strftime(datetime.now(), "%H:%M:%S") + "] " + "ACK_LINKACTIVE")
                 listbox.itemconfig(counter, {'fg': 'gray'})
                 ser.ft_write("ACK_LINKACTIVE")
                 counter += 1
@@ -56,7 +56,7 @@ def chat(ser):
                         data_to_read = ser.in_waiting
                         in_st = ser.ft_read(data_to_read)
                         if in_st == "ACK_LINKACTIVE":
-                            listbox.insert(tk.tk.END,
+                            listbox.insert(tk.END,
                                            "[" + datetime.strftime(datetime.now(), "%H:%M:%S") + "]" + " LINKACTIVE")
                             listbox.itemconfig(counter, {'fg': 'gray'})
                             counter += 1
@@ -118,6 +118,8 @@ def chat(ser):
         global out_flag
         while len(in_list) > 0:
             st = in_list.pop(0)
+            # print(type(st))
+            # print(st)
             if ser.another_username != None:
                 listbox.insert(tk.END, "[" + datetime.strftime(datetime.now(),
                                                             "%H:%M:%S") + "] " + ser.another_username + ": " + st)
@@ -194,6 +196,15 @@ def chat(ser):
     button_open.focus_set()
     button_open.place(x=600, y=0, width=100, height=40)
 
+    chat_name1 = "Name1"
+    chat_name2 = "Name2"
+    button_open = tk.Button(window, text="Чат: " + chat_name1, bg='white')#correct command!
+    button_open.place(x=600, y=40, width=100, height=40)
+    button_open = tk.Button(window, text="Чат: " + chat_name2, bg='white')#correct command!
+    button_open.place(x=600, y=80, width=100, height=40)
+
+
+
     global counter_info_window
     counter_info_window = 0
 
@@ -265,7 +276,7 @@ def chat(ser):
                 listbox_source.insert(tk.END, i)
 
     button_source_message = tk.Button(window, text='Исходящие', command=source_message, state='normal', bg='white')
-    button_source_message.place(x=600, y=113, width=100, height=40)
+    button_source_message.place(x=600, y=166, width=100, height=40)
 
     ##--Приходящие сообщения(destination_message)
     global count_dest_window
@@ -303,7 +314,7 @@ def chat(ser):
             count_dest_window += 1
 
     button_dest_message = tk.Button(window, text='Входящие', command=dest_message, state='normal', bg='white')
-    button_dest_message.place(x=600, y=226, width=100, height=40)
+    button_dest_message.place(x=600, y=253, width=100, height=40)
     ##---------------------
 
     button_display = tk.Button(window, text='Отправить', command=fn_out, state=tk.DISABLED, bg='white')
