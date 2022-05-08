@@ -75,11 +75,11 @@ def chat(ser):
     tr_in = threading.Thread(target=fn_in)
     tr_in.daemon = True
 
-    thread_2 = threading.Thread(target=check_connect)
-    thread_2.daemon = True
+    thread_check = threading.Thread(target=check_connect)
+    thread_check.daemon = True
 
-    thread_3_name = threading.Thread(target=give_username)
-    thread_3_name.daemon = True
+    thread_name = threading.Thread(target=give_username)
+    thread_name.daemon = True
 
     ## -- запустить основной поток
     def fn_out():
@@ -181,8 +181,10 @@ def chat(ser):
                 counter += 1
                 if start_thread == 0:
                     tr_in.start()
-                    thread_2.start()
-                    thread_3_name.start()
+                    thread_check.start()                 
+                    tr_in.start()
+                    thread_check.start()
+                    thread_name.start()
                     start_thread = 1
         else:
             ser.close()

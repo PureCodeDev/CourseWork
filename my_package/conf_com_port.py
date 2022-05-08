@@ -11,7 +11,7 @@ import serial
 from serial.tools import list_ports
 from my_package.validation import validation, cut_port_name
 
-def configure_window(ser):
+def configure_window(ser1, ser2):
 	global ok_button
 	ok_button = False
 
@@ -91,7 +91,7 @@ def configure_window(ser):
 	##-- Настройки сохраняются
 	def clicked(event):
 		global ok_button
-		if validation(name, com_port1, speed_b, size_b, parity_b, bit_stop, ser) and validation(name, com_port2, speed_b, size_b, parity_b, bit_stop, ser) :
+		if validation(name, com_port1, speed_b, size_b, parity_b, bit_stop, ser1) and validation(name, com_port2, speed_b, size_b, parity_b, bit_stop, ser2) :
 			conf_window.destroy()
 			ok_button = True
 		else:
