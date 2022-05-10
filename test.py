@@ -31,10 +31,7 @@ def main():
 	ok_button = configure_window(ser1,ser2)
 	# ser.timeout = 2
 	if ok_button:
-		th1 = Thread(target=chat, args=ser1)
-		th1.start()
-		#th2 = Thread(target = chat, args = (ser2))
-		#th2.start()
+		chat(ser1, ser2)
 
 
 if __name__== "__main__":
