@@ -24,17 +24,23 @@ def chat(ser,ser2):
     out_flag = []
     out_flag2 = []
 
-    def give_username():         
-        while ser.another_username == None:
-            time.sleep(1)
-            if ser.is_open:
-                ser.ft_write("Username" + str(ser.username))
+    # def give_username():         
+    #     while ser.another_username == None:
+    #         time.sleep(1)
+    #         if ser.is_open:
+    #             ser.ft_write("Username" + str(ser.username))
 
+    global username_flag
+    username_flag = True    
+    global circle_flag
+    circle_flag = True
     def give_username2():
-        while ser2.another_username == None:
-            time.sleep(1)
+        while ser.another_username == None and ser2.another_username == None:
+            time.sleep(5)
             if ser2.is_open:
                 ser2.ft_write("Username" + str(ser2.username))
+            time.sleep(5)
+
 
     ## counter - счетчик(строчка в listbox)
     ## -- Отправленные сообщения таким образом становятся синими
@@ -54,7 +60,6 @@ def chat(ser,ser2):
     #             ser.ft_write("ACK_LINKACTIVE")
     #             counter += 1
     #             time.sleep(10)
-
     global ask_flag
     ask_flag = False
     def check_connect2():
@@ -101,8 +106,11 @@ def chat(ser,ser2):
     def fn_in():   #####################################
         global counter
         global ask_flag
+        global username_flag
+        global circle_flag
         global in_list
         global in_st
+        global ACK
         while 1:
             if ser.is_open:
                 # --ждем прихода к нам строки
@@ -110,37 +118,62 @@ def chat(ser,ser2):
                     if ser.is_open:
                         data_to_read = ser.in_waiting
                         in_st = ser.ft_read(data_to_read)
-                        if in_st.find("ACK") != -1:
-                            #ser2.ft_write("ACK_LINKACTIVE" + chr(ord(in_st[in_st.find("ACK_LINKACTIVE") + len("ACK_LINKACTIVE")])+1))
-                            ask_flag = True
-                        elif in_st[:8] == "Username":
-                            ser.another_username = in_st[8:]
-                            user1.configure(text = ser.another_username)
-                        if in_st.find("|") != -1:
-                            if in_st != '':
-                                dest = ""
-                                source = ""
-                                cnt = 0
-                                in_st = in_st[in_st.find("|")+1:]
-                                for i in in_st:
-                                    if i != "|":
-                                        source+=i
+                        if in_st.find("Username") != -1:
+                            if (in_st[8] == ser.username):#имена в длину могут быть только 1 символ!!!
+                                ser2.another_username = in_st[9]
+                                ser.another_username = in_st[10]
+                                user1.configure(text = ser.another_username)
+                                user2.configure(text = ser2.another_username)
+                                circle_flag = True
+                            else:
+                                # j = in_st.find("Username") + 9
+                                # if(j < len(in_st)):
+                                #     if(in_st[j] == "|"):
+                                #         j += 10 #UsernameA|UsernameB
+                                # print(in_st[in_st.find("Username"):j] + "|" + "Username" + ser.username)
+                                fn_send2(in_st + ser.username)
+                        else:
+                            if in_st.find("ACK") != -1 and in_st.find("ACK") != in_st.find("ACK_"):
+                                #ser2.ft_write("ACK_LINKACTIVE" + chr(ord(in_st[in_st.find("ACK_LINKACTIVE") + len("ACK_LINKACTIVE")])+1))
+                                ask_flag = True
+                            if in_st.find("|") != -1:
+                                if in_st != '':
+                                    dest = ""
+                                    source = ""
+                                    cnt = 0
+                                    in_st = in_st[in_st.find("|")+1:]
+                                    for i in in_st:
+                                        if i != "|":
+                                            source+=i
+                                        else:
+                                            cnt+=1
+                                            if cnt >1: break
+                                            dest = source
+                                            source = ""
+                                    if dest != ser.username:
+                                        i = 0
+                                        while (in_st.find("ACK", i) != -1):
+                                            if(in_st.find("ACK", i) != in_st.find("ACK_", i)):
+                                                in_st = in_st.replace('ACK','')
+                                            else:
+                                                i = in_st.find("ACK", i) + 1
+                                        fn_send2("|" + in_st)
                                     else:
-                                        cnt+=1
-                                        if cnt >1: break
-                                        dest = source
-                                        source = ""
-                                if dest != ser.username:
-                                    while (in_st.find("ACK") != -1):
-                                        in_st = in_st.replace('ACK','')
-                                    fn_send2("|" + in_st)
-                                else:
-                                    in_st = in_st.replace(dest+"|"+source+"|","")
-                                    if source == ser.another_username:
-                                        in_list.append(in_st)
-                                    else:
-                                        in_list2.append(in_st)
-                time.sleep(1)  ##-- CPU не будет нагреваться до 100C
+                                        output_side = source
+                                        in_st = in_st.replace(dest+"|"+source+"|","")
+                                        if in_st != "ACK_Message_delivered":
+                                            if source == ser.another_username:
+                                                in_list.append(in_st)
+                                            else:
+                                                in_list2.append(in_st)
+                                            ACK = "|"+source + "|" + dest+"|"
+                                            fn_send2(ACK+"ACK_Message_delivered")
+                                        else:
+                                            if(output_side == ser.another_username):
+                                                in_list.append("ACK_Message_delivered")
+                                            elif (output_side == ser2.another_username):
+                                                in_list2.append("ACK_Message_delivered")
+                time.sleep(0.5)  ##-- CPU не будет нагреваться до 100C
 
     def fn_in2():
         global counter2
@@ -175,8 +208,8 @@ def chat(ser,ser2):
     # thread_2 = threading.Thread(target=check_connect)
     # thread_2.daemon = True
 
-    thread_3_name = threading.Thread(target=give_username)
-    thread_3_name.daemon = True
+    # thread_3_name = threading.Thread(target=give_username)
+    # thread_3_name.daemon = True
 
     global start_thread2
     start_thread2 = 0
@@ -196,7 +229,12 @@ def chat(ser,ser2):
     def fn_out2():
         global out_flag2
         out_flag2 = 1
-
+    def fn_out_all():
+        # global out_flag
+        # global out_flag2
+        # out_flag2 = 1
+        # out_flag2 = 1
+        pass
     ##--Отправление сообщений через кнопку "Отправить"
     global buffer_for_source_message
     buffer_for_source_message = []
@@ -210,7 +248,7 @@ def chat(ser,ser2):
         # global user_name
         out_st = enter.get()
         if len(out_st) > 0:
-            ser2.ft_write("|"+ser.another_username +"|" + ser.username + "|" + out_st + '\r\n')
+            ser2.ft_write("|"+ser.another_username +"|" + ser.username + "|" + out_st) #####
             listbox.insert(tk.END,
                            "[" + datetime.strftime(datetime.now(), "%H:%M:%S") + "] " + ser.username + ": " + out_st)
             listbox.itemconfig(counter, {'fg': 'blue'})
@@ -228,11 +266,11 @@ def chat(ser,ser2):
         global counter2
         # global user_name
         if out_st != "":
-            ser2.ft_write(out_st + '\r\n')
+            ser2.ft_write(out_st)#####
             return
         out_st = enter2.get()
         if len(out_st) > 0:
-            ser2.ft_write("|" + ser2.another_username +"|" + ser2.username + "|" + out_st + '\r\n')
+            ser2.ft_write("|" + ser2.another_username +"|" + ser2.username + "|" + out_st) #####
             listbox2.insert(tk.END,
                            "[" + datetime.strftime(datetime.now(), "%H:%M:%S") + "] " + ser2.username + ": " + out_st)
             listbox2.itemconfig(counter2, {'fg': 'blue'})
@@ -245,6 +283,7 @@ def chat(ser,ser2):
             # except:
             #     print("Source message window is closed")
         enter2.delete(0, tk.END)
+
 
     ## == вывести строки в листбокс
     global buffer_for_dest_message
@@ -313,7 +352,7 @@ def chat(ser,ser2):
     x_cordinate = int((screen_width/2) - (716/2))
     y_cordinate = int((screen_height/2) - (400/2))
 
-    window.geometry("800x400+{}+{}".format(x_cordinate, y_cordinate-50))
+    window.geometry("820x400+{}+{}".format(x_cordinate, y_cordinate-50))
     #window.geometry('716x400')
     window.configure(bg='#DCDCDC')
 
@@ -343,6 +382,10 @@ def chat(ser,ser2):
     enter2.place(x=325, y=340, width=275, height=40)
     enter2.configure(bg='white')
 
+    enterall = tk.Entry(window, font=('Arial', 15))
+    enterall.place(x=0, y=380, width=600, height=40)
+    enterall.configure(bg='white')
+
     def open_port():
         global counter
         global tr_in
@@ -358,7 +401,8 @@ def chat(ser,ser2):
                 if start_thread == 0:
                     tr_in.start()
                     #thread_2.start()
-                    thread_3_name.start()
+
+                    #thread_3_name.start()
                     start_thread = 1
         else:
             ser.close()
@@ -405,10 +449,6 @@ def chat(ser,ser2):
     button_open2.focus_set()
     button_open2.place(x=700, y=0, width=100, height=40)
 
-
-
-
-
     global counter_info_window
     counter_info_window = 0
 
@@ -432,11 +472,11 @@ def chat(ser,ser2):
             temp_window['bg'] = 'white'
             student_1 = tk.Label(temp_window, text="Авторы", font=('Helvetica', 15), bg='white')
             student_1.grid(row=0, column=0)
-            student_1 = tk.Label(temp_window, text="Михаил Васюнин", font=('Helvetica', 15), bg='white')
+            student_1 = tk.Label(temp_window, text="Александр Бахман", font=('Helvetica', 15), bg='white')
             student_1.grid(row=1, column=0)
             student_2 = tk.Label(temp_window, text="Михаил Яковлев", font=('Helvetica', 15), bg='white')
             student_2.grid(row=2, column=0)
-            student_3 = tk.Label(temp_window, text="Александр Бахман", font=('Helvetica', 15), bg='white')
+            student_3 = tk.Label(temp_window, text="Михаил Васюнин", font=('Helvetica', 15), bg='white')
             student_3.grid(row=3, column=0)
             counter_info_window+=1
 
@@ -599,6 +639,9 @@ def chat(ser,ser2):
 
     button_display2 = tk.Button(window, text='Отправить', command=fn_out2, state=tk.DISABLED, bg='white')
     button_display2.place(x=700, y=340, width=100, height=40)
+
+    button_display_all = tk.Button(window, text='Отправить всем', command=fn_out_all, state=tk.DISABLED, bg='white')
+    button_display_all.place(x=700, y=340, width=100, height=40)
 
     window.after(10, fn_disp)
     window.after(10, fn_disp2)
